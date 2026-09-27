@@ -6,10 +6,14 @@ from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask_cors import CORS
 
+import database
+
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app, origins=[os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")])
+
+database.init_db()
 
 
 def error(message, code):
@@ -21,7 +25,11 @@ def error(message, code):
 
 @app.get("/api/health")
 def health():
-    return jsonify({"status": "ok"})
+    db_ok = database.is_connected()
+    return jsonify({
+        "status": "ok",
+        "database": "connected" if db_ok else "disconnected",
+    })
 
 
 # ---------- Error handlers ----------
