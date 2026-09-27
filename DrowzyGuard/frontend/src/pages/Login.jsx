@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { login, register } from "../services/api.js";
 
 export default function Login({ onLogin, notice }) {
@@ -9,6 +9,10 @@ export default function Login({ onLogin, notice }) {
   const [loading, setLoading] = useState(false);
 
   const isRegister = mode === "register";
+
+  useEffect(() => {
+    document.title = `${isRegister ? "Register" : "Login"} · DrowzyGuard`;
+  }, [isRegister]);
 
   function switchMode() {
     setMode(isRegister ? "login" : "register");
@@ -52,6 +56,7 @@ export default function Login({ onLogin, notice }) {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               autoComplete="email"
+              autoFocus
               required
             />
           </label>

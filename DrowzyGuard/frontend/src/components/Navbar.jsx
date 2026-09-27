@@ -28,7 +28,7 @@ export default function Navbar({ user, onLogout }) {
 
       <nav className="nav">
         {LINKS.map((link) => (
-          <NavLink key={link.to} to={link.to} end className="nav-link">
+          <NavLink key={link.to} to={link.to} end className="nav-link" aria-label={link.label} title={link.label}>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d={link.icon} />
             </svg>

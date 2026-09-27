@@ -280,7 +280,7 @@ h2 {
   font-size: 1.6rem;
   font-weight: 700;
   transition: color 0.3s;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word; /* only break words that can't fit at all */
 }
 
 .status-card-large .card-value {
@@ -619,7 +619,8 @@ h2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .detection-stats .status-card-large {
+  .detection-stats .status-card-large,
+  .detection-stats .status-card-wide {
     grid-column: 1 / -1;
   }
 }
@@ -685,6 +686,7 @@ h2 {
 /* ---------- Banners & badges ---------- */
 .page-header-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
@@ -727,4 +729,66 @@ h2 {
   color: var(--drowsy);
   font-weight: 600;
   font-size: 0.9rem;
+}
+
+.page-header-row > div {
+  flex: 1 1 260px;
+}
+
+/* ---------- Detection tips ---------- */
+.tips {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.tips li::before {
+  content: "•";
+  margin-right: 0.5rem;
+  color: var(--accent);
+}
+
+.table .col-time {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* History table becomes stacked rows on phones instead of scrolling sideways */
+@media (max-width: 600px) {
+  .table thead {
+    display: none;
+  }
+
+  .table tbody tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "date status"
+      "score alert";
+    gap: 0.35rem 1rem;
+    padding: 0.85rem 1rem;
+  }
+
+  .table tbody tr + tr {
+    border-top: 1px solid var(--border);
+  }
+
+  .table tbody tr + tr td {
+    border-top: none;
+  }
+
+  .table td {
+    padding: 0;
+    white-space: normal;
+  }
+
+  .table .col-date { grid-area: date; }
+  .table .col-status { grid-area: status; justify-self: end; }
+  .table .col-score { grid-area: score; font-weight: 700; }
+  .table .col-alert { grid-area: alert; justify-self: end; }
 }

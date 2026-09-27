@@ -14,6 +14,14 @@ export function formatDate(timestamp) {
   });
 }
 
+export function formatDay(timestamp) {
+  return new Date(timestamp).toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
+}
+
+export function formatTime(timestamp) {
+  return new Date(timestamp).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
 function timeAgo(timestamp) {
   const minutes = Math.floor((Date.now() - new Date(timestamp)) / 60000);
   if (minutes < 1) return "Just now";
@@ -28,15 +36,20 @@ export default function Dashboard({ user }) {
   const [latest, setLatest] = useState(null);
   const [totalAlerts, setTotalAlerts] = useState(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    document.title = "Dashboard · DrowzyGuard";
     getHistory(1)
       .then((data) => {
         setLatest(data.history[0] || null);
         setTotalAlerts(data.totalAlerts);
       })
-      .catch((err) => setError(err.message));
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   }, []);
+
+  const emptyHint = loading ? "Loading…" : "No detections yet";
 
   function startDetection() {
     unlockAlarm(); // this click allows the alarm to play on the Detection page
@@ -60,7 +73,7 @@ export default function Dashboard({ user }) {
           value={latest ? formatStatus(latest.status).toUpperCase() : "—"}
           status={latest?.status}
           dot
-          hint={latest ? "From your last session" : "No detections yet"}
+          hint={latest ? "From your last session" : emptyHint}
         />
         <StatusCard
           label="Drowsiness Score"
@@ -77,7 +90,7 @@ export default function Dashboard({ user }) {
         <StatusCard
           label="Recent Detection"
           value={latest ? timeAgo(latest.timestamp) : "—"}
-          hint={latest ? `${formatDate(latest.timestamp)} · ${latest.score}% ${formatStatus(latest.status)}` : "Start a session to record one"}
+          hint={latest ? `${formatDate(latest.timestamp)} · ${latest.score}% ${formatStatus(latest.status)}` : loading ? "Loading…" : "Start a session to record one"}
         />
       </div>
 

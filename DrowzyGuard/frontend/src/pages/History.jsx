@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { formatStatus } from "../components/StatusCard.jsx";
 import { getHistory } from "../services/api.js";
-import { formatDate } from "./Dashboard.jsx";
+import { formatDay, formatTime } from "./Dashboard.jsx";
 
 export default function History() {
   const [records, setRecords] = useState(null); // null while loading
@@ -17,7 +17,10 @@ export default function History() {
       });
   }
 
-  useEffect(load, []);
+  useEffect(() => {
+    document.title = "History · DrowzyGuard";
+    load();
+  }, []);
 
   return (
     <div className="page">
@@ -56,12 +59,17 @@ export default function History() {
             <tbody>
               {records.map((record) => (
                 <tr key={record.id}>
-                  <td>{formatDate(record.timestamp)}</td>
-                  <td>{record.score}%</td>
-                  <td>
+                  <td className="col-date">
+                    {formatDay(record.timestamp)}
+                    <span className="col-time">{formatTime(record.timestamp)}</span>
+                  </td>
+                  <td className="col-score">{record.score}%</td>
+                  <td className="col-status">
                     <span className={`pill pill-${record.status}`}>{formatStatus(record.status)}</span>
                   </td>
-                  <td>{record.alert ? <span className="alert-flag">⚠ Alarm triggered</span> : <span className="muted">—</span>}</td>
+                  <td className="col-alert">
+                    {record.alert ? <span className="alert-flag">⚠ Alarm triggered</span> : <span className="muted">—</span>}
+                  </td>
                 </tr>
               ))}
             </tbody>

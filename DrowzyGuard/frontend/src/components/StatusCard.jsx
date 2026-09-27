@@ -13,9 +13,9 @@ export function formatStatus(status) {
  * A dashboard card. `status` colours the value (awake / warning / drowsy /
  * no_face). `meter` (0-100) adds a progress bar under the value.
  */
-export default function StatusCard({ label, value, status, hint, meter, large = false, dot = false }) {
+export default function StatusCard({ label, value, status, hint, meter, large = false, dot = false, className = "" }) {
   return (
-    <div className={`card status-card ${large ? "status-card-large" : ""}`}>
+    <div className={`card status-card ${large ? "status-card-large" : ""} ${className}`}>
       <span className="card-label">{label}</span>
       <span className={`card-value ${status ? `text-${status}` : ""}`}>
         {dot && status && <span className={`status-dot bg-${status}`} aria-hidden="true" />}

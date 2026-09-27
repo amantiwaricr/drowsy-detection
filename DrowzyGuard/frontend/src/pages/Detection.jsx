@@ -24,6 +24,7 @@ export default function Detection() {
   }, [location, navigate]);
 
   useEffect(() => {
+    document.title = "Live Detection · DrowzyGuard";
     getHealth()
       .then((health) => setMode(health.detection))
       .catch((err) => setError(err.message));
@@ -91,6 +92,11 @@ export default function Detection() {
               Stop
             </button>
           </div>
+          <ul className="tips">
+            <li>Face the camera in good, even lighting.</li>
+            <li>The alarm sounds after about 3 seconds of closed eyes.</li>
+            <li>Keep this tab open while driving — the alarm plays here.</li>
+          </ul>
         </section>
 
         <aside className="detection-stats">
@@ -106,6 +112,7 @@ export default function Detection() {
             value={status ? formatStatus(status).toUpperCase() : running ? "Analyzing…" : "Idle"}
             status={status}
             dot
+            className="status-card-wide"
             hint={status === "no_face" ? "Center your face in the camera" : undefined}
           />
           <StatusCard label="Eyes" value={live ? result.eyes.toUpperCase() : "—"} />
