@@ -1,0 +1,23 @@
+# Secrets
+.env
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Node
+node_modules/
+dist/
+
+# Large data
+dataset/**/*.jpg
+dataset/**/*.jpeg
+dataset/**/*.png
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
