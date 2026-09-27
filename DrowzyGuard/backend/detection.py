@@ -16,7 +16,7 @@ import threading
 import time
 from collections import deque
 
-import cv2
+import cv2  # type: ignore[import-not-found]
 import numpy as np
 
 import alerts
