@@ -7,6 +7,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 
 import database
+import model
 
 load_dotenv()
 
@@ -14,6 +15,7 @@ app = Flask(__name__)
 CORS(app, origins=[os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")])
 
 database.init_db()
+model.load_model()  # loaded once at startup, never per frame
 
 
 def error(message, code):
@@ -29,6 +31,7 @@ def health():
     return jsonify({
         "status": "ok",
         "database": "connected" if db_ok else "disconnected",
+        "model": "loaded" if model.is_loaded() else "not found",
     })
 
 
