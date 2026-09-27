@@ -20,7 +20,7 @@ alert, sounds an alarm, and records the event in their detection history.
 - **Status** — Awake (0–30%), Warning (31–60%), Drowsy (61–100%), or No face.
 - **Alerts** — flashing "⚠️ DROWSINESS DETECTED" banner plus an alarm tone generated in the browser.
 - **History** — results are stored in MongoDB and shown on the Dashboard and History pages.
-- **Trainable model** — `train.py` trains a Keras model from your own eye images. Until then an OpenCV fallback is used.
+- **Trained model** — a small Keras CNN trained on the MRL Eye Dataset (98.6% on its test split, see [Model results](#model-results)). Without the model file an OpenCV fallback is used.
 
 ## Project structure
 
@@ -49,7 +49,7 @@ DrowzyGuard/
 │   ├── package.json
 │   ├── vite.config.js
 │   └── .env.example
-├── model/                Put drowsiness_model.h5 here (not included)
+├── model/                drowsiness_model.h5 (trained Keras model)
 ├── dataset/              awake/ and drowsy/ training images (not included)
 ├── docs/                 Architecture, use-case, data-flow and ER diagrams
 └── README.md
@@ -115,8 +115,9 @@ Use two terminals.
 Open http://localhost:5173, register an account, go to **Detection** and press
 **Start**. Allow camera access. Close your eyes for about 3 seconds to trigger the alarm.
 
-`/api/health` should show `"database": "connected"`. `"model": "not found"` is
-expected until you train or add a model.
+`/api/health` should show `"database": "connected"` and `"model": "loaded"`.
+If it shows `"model": "not found"`, the app still works using the OpenCV fallback;
+see [Training a model](#training-a-model).
 
 ---
 
@@ -161,17 +162,37 @@ expected until you train or add a model.
 
 ---
 
+## Model results
+
+`model/drowsiness_model.h5` was trained with `train.py` (10 epochs, 64×64
+grayscale, CPU) on the **MRL Eye Dataset** (Kaggle version
+`akashshingha850/mrl-eye-dataset`, v4), with the dataset's `sleepy` class used as `drowsy`.
+
+| Evaluation | Images | Accuracy |
+|---|---|---|
+| Held-out 20% of the `train` split (`train.py`) | 10,187 | 98.40% |
+| The dataset's separate `test` split | 16,981 | 98.57% |
+
+These numbers describe eye-crop classification on MRL images. MRL images are
+infrared close-ups; live webcam performance depends on lighting and camera and
+has not been measured, and the drowsiness score and alarm thresholds on top of
+the model are application settings, not validated values.
+
 ## Training a model
 
-No trained model is included, and no accuracy is claimed for one.
-
-1. Collect **eye crop** images (one eye per image), for example from a public
-   open/closed-eye dataset such as the MRL Eye Dataset. Check its license first.
-   - `dataset/awake/` — open eyes
-   - `dataset/drowsy/` — closed eyes
+1. Get **eye crop** images (one eye per image). The MRL Eye Dataset works well
+   (check its license):
+   ```bash
+   pip install kagglehub
+   python -c "import kagglehub; print(kagglehub.dataset_download('akashshingha850/mrl-eye-dataset'))"
+   ```
+   Its `data/train/awake` folder holds open eyes and `data/train/sleepy` closed eyes.
+   Rename `sleepy` to `drowsy` (or copy the images into `dataset/awake/` and `dataset/drowsy/`).
 2. From `backend/` with the venv active:
    ```bash
-   python train.py                 # options: --epochs 15 --img-size 64 --batch-size 32
+   python train.py                                  # uses ../dataset
+   python train.py --dataset <path>/data/train      # or point it at the downloaded folder
+   # options: --epochs 15 --img-size 64 --batch-size 32
    ```
 3. It trains a small CNN, prints **accuracy on a held-out 20% of your images**,
    and saves `model/drowsiness_model.h5`.
