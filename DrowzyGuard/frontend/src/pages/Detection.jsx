@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import AlertBox from "../components/AlertBox.jsx";
 import Camera from "../components/Camera.jsx";
 import StatusCard, { formatStatus } from "../components/StatusCard.jsx";
@@ -8,6 +8,7 @@ import { detectFrame, getHealth } from "../services/api.js";
 
 export default function Detection() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [running, setRunning] = useState(Boolean(location.state?.autoStart));
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -16,6 +17,11 @@ export default function Detection() {
   // Each Start begins a new session; responses from an older session are ignored.
   const sessionRef = useRef(0);
   const resetNextRef = useRef(true);
+
+  // Auto-start only once when arriving from the Dashboard, not again on page reload.
+  useEffect(() => {
+    if (location.state?.autoStart) navigate(location.pathname, { replace: true, state: null });
+  }, [location, navigate]);
 
   useEffect(() => {
     getHealth()

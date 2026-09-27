@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { login, register } from "../services/api.js";
 
-export default function Login({ onLogin }) {
+export default function Login({ onLogin, notice }) {
   const [mode, setMode] = useState("login"); // "login" | "register"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,8 +24,8 @@ export default function Login({ onLogin }) {
     }
     setLoading(true);
     try {
-      // Temporary local sign-in; Phase 8 replaces this with /api/login and /api/register.
-      await onLogin({ email: email.trim().toLowerCase(), name: email.split("@")[0] });
+      const session = isRegister ? await register(email, password) : await login(email, password);
+      onLogin(session);
     } catch (err) {
       setError(err.message || "Something went wrong.");
     } finally {
@@ -66,6 +67,7 @@ export default function Login({ onLogin }) {
             />
           </label>
 
+          {notice && !error && <p className="form-notice">{notice}</p>}
           {error && <p className="form-error" role="alert">{error}</p>}
 
           <button className="btn btn-primary btn-block" disabled={loading}>

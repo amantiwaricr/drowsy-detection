@@ -713,3 +713,12 @@ h2 {
   background: rgba(239, 68, 68, 0.1);
   color: #fca5a5;
 }
+
+.form-notice {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #fcd34d;
+  font-size: 0.9rem;
+}

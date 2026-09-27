@@ -3,9 +3,11 @@
 import os
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, g, jsonify, request
 from flask_cors import CORS
+from pymongo.errors import PyMongoError
 
+import auth
 import database
 import detection
 import model
@@ -17,6 +19,7 @@ app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024  # webcam frames are ~20-80 K
 # Comma-separated list, e.g. "http://localhost:5173,http://127.0.0.1:5173"
 CORS(app, origins=os.getenv("FRONTEND_ORIGIN", "http://localhost:5173").split(","))
 
+auth.check_config()
 database.init_db()
 model.load_model()  # loaded once at startup, never per frame
 
@@ -39,22 +42,47 @@ def health():
     })
 
 
+# ---------- Authentication ----------
+
+@app.post("/api/register")
+def register():
+    data = request.get_json(silent=True) or {}
+    return jsonify(auth.register(data.get("email"), data.get("password"))), 201
+
+
+@app.post("/api/login")
+def login():
+    data = request.get_json(silent=True) or {}
+    return jsonify(auth.login(data.get("email"), data.get("password")))
+
+
 # ---------- Detection ----------
 
 @app.post("/api/detection")
+@auth.require_auth
 def detect():
     data = request.get_json(silent=True) or {}
     image = detection.decode_image(data.get("image"))
     if image is None:
         return error("A valid base64-encoded image is required", 400)
 
-    user_key = "demo"  # replaced by the logged-in user's id in Phase 8
     if data.get("reset"):
-        detection.reset(user_key)
-    return jsonify(detection.analyze_frame(image, user_key))
+        detection.reset(g.user_id)
+    return jsonify(detection.analyze_frame(image, g.user_id))
 
 
 # ---------- Error handlers ----------
+
+@app.errorhandler(auth.AuthError)
+def auth_error(exc):
+    return error(exc.message, exc.code)
+
+
+@app.errorhandler(PyMongoError)
+def database_error(exc):
+    print(f"[database] {exc}")
+    return error("Database unavailable. Please try again later.", 503)
+
 
 @app.errorhandler(404)
 def not_found(_):
