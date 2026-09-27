@@ -3,15 +3,17 @@
 import os
 
 from dotenv import load_dotenv
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 import database
+import detection
 import model
 
 load_dotenv()
 
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024  # webcam frames are ~20-80 KB
 CORS(app, origins=[os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")])
 
 database.init_db()
@@ -32,7 +34,23 @@ def health():
         "status": "ok",
         "database": "connected" if db_ok else "disconnected",
         "model": "loaded" if model.is_loaded() else "not found",
+        "detection": "model" if model.is_loaded() else "opencv fallback",
     })
+
+
+# ---------- Detection ----------
+
+@app.post("/api/detection")
+def detect():
+    data = request.get_json(silent=True) or {}
+    image = detection.decode_image(data.get("image"))
+    if image is None:
+        return error("A valid base64-encoded image is required", 400)
+
+    user_key = "demo"  # replaced by the logged-in user's id in Phase 8
+    if data.get("reset"):
+        detection.reset(user_key)
+    return jsonify(detection.analyze_frame(image, user_key))
 
 
 # ---------- Error handlers ----------
@@ -45,6 +63,11 @@ def not_found(_):
 @app.errorhandler(405)
 def method_not_allowed(_):
     return error("Method not allowed", 405)
+
+
+@app.errorhandler(413)
+def too_large(_):
+    return error("Image too large", 413)
 
 
 @app.errorhandler(500)
