@@ -22,7 +22,7 @@ export function formatTime(timestamp) {
   return new Date(timestamp).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
-function timeAgo(timestamp) {
+export function timeAgo(timestamp) {
   const minutes = Math.floor((Date.now() - new Date(timestamp)) / 60000);
   if (minutes < 1) return "Just now";
   if (minutes < 60) return `${minutes} min ago`;
