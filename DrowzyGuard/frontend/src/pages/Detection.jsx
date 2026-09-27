@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import AlertBox from "../components/AlertBox.jsx";
+import AlertBox, { unlockAlarm } from "../components/AlertBox.jsx";
 import Camera from "../components/Camera.jsx";
 import StatusCard, { formatStatus } from "../components/StatusCard.jsx";
 import { FRAME_INTERVAL_MS } from "../config.js";
@@ -30,6 +30,7 @@ export default function Detection() {
   }, []);
 
   function start() {
+    unlockAlarm(); // browsers only allow sound after a click
     sessionRef.current += 1;
     resetNextRef.current = true;
     setResult(null);

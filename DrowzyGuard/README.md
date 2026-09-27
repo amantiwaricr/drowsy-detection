@@ -25,6 +25,11 @@ average eye closure over the last 15 frames, so a normal blink barely moves it.
 Status thresholds live in `backend/alerts.py` (0–30 awake, 31–60 warning,
 61–100 drowsy). They are application settings, not medically validated values.
 
+When the status becomes drowsy the browser shows a flashing alert and plays an
+alarm tone (Web Audio API, no sound file). The alarm keeps sounding until the
+score drops to 40% or below (`ALARM_OFF_SCORE`), so it doesn't flicker around
+the threshold, and it keeps sounding if the face disappears while drowsy.
+
 Until a trained model exists, an OpenCV fallback is used: a visible face with
 no detected (open) eyes counts as closed. `/api/health` shows which mode is active.
 

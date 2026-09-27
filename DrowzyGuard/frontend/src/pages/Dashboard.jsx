@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { unlockAlarm } from "../components/AlertBox.jsx";
 import StatusCard, { formatStatus } from "../components/StatusCard.jsx";
 import { getHistory } from "../services/api.js";
 
@@ -36,6 +37,11 @@ export default function Dashboard({ user }) {
       })
       .catch((err) => setError(err.message));
   }, []);
+
+  function startDetection() {
+    unlockAlarm(); // this click allows the alarm to play on the Detection page
+    navigate("/detection", { state: { autoStart: true } });
+  }
 
   return (
     <div className="page">
@@ -83,7 +89,7 @@ export default function Dashboard({ user }) {
             start to fall asleep.
           </p>
         </div>
-        <button className="btn btn-primary btn-lg" onClick={() => navigate("/detection", { state: { autoStart: true } })}>
+        <button className="btn btn-primary btn-lg" onClick={startDetection}>
           Start Detection
         </button>
       </section>

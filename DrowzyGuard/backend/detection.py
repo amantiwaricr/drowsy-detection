@@ -117,39 +117,42 @@ def analyze_frame(image, key="default"):
         window = _windows.setdefault(key, deque(maxlen=WINDOW_SIZE))
         face = detect_face(gray_eq)
         if face is None:
+            # Keep an active alarm sounding: losing the face can mean the head dropped.
             return {"status": "no_face", "score": _score(window), "eyes": "unknown",
-                    "face": False, "alert": False}
+                    "face": False, "alert": alerts.is_alarm_active(key)}
 
         closure = eye_closure(image, gray, gray_eq, face)
         window.append(closure)
         score = _score(window)
         status = alerts.get_status(score)
         return {"status": status, "score": score, "eyes": "closed" if closure >= 0.5 else "open",
-                "face": True, "alert": alerts.is_alert(status)}
+                "face": True, "alert": alerts.update_alarm(key, score)}
 
 
 def history_record(key, result):
     """Return the record to store for this result, or None if it should not be saved.
 
-    A record is saved when the status changes, otherwise every SAVE_INTERVAL_SECONDS,
-    so history stays readable instead of holding several rows per second.
-    `alert` is True only on the record where the alarm starts, so counting alert
-    records counts alarm events.
+    A record is saved when the status or alarm changes, otherwise every
+    SAVE_INTERVAL_SECONDS, so history stays readable instead of holding several
+    rows per second. `alert` is True only on the record where the alarm starts,
+    so counting alert records counts alarm events.
     """
     if not result["face"]:
         return None
-    status, now = result["status"], time.monotonic()
+    status, alarm, now = result["status"], result["alert"], time.monotonic()
     with _lock:
-        last = _last_saved.get(key)
-        changed = last is None or last[0] != status
-        if not changed and now - last[1] < SAVE_INTERVAL_SECONDS:
+        last = _last_saved.get(key)  # (status, alarm, time)
+        changed = last is None or last[0] != status or last[1] != alarm
+        if not changed and now - last[2] < SAVE_INTERVAL_SECONDS:
             return None
-        _last_saved[key] = (status, now)
-    return {"score": result["score"], "status": status, "alert": result["alert"] and changed}
+        _last_saved[key] = (status, alarm, now)
+    alarm_started = alarm and (last is None or not last[1])
+    return {"score": result["score"], "status": status, "alert": alarm_started}
 
 
 def reset(key="default"):
-    """Clear a user's rolling window and save state, e.g. when detection is restarted."""
+    """Clear a user's rolling window, save state and alarm, e.g. when detection is restarted."""
     with _lock:
         _windows.pop(key, None)
         _last_saved.pop(key, None)
+    alerts.reset(key)
