@@ -56,3 +56,8 @@ export function register(email, password) {
 export function detectFrame(image, reset = false) {
   return request("/api/detection", { method: "POST", body: { image, reset } });
 }
+
+// Returns { history: [{ id, score, status, alert, timestamp }], totalAlerts }.
+export function getHistory(limit = 100) {
+  return request(`/api/history?limit=${limit}`);
+}

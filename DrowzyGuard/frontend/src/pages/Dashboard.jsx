@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import StatusCard, { formatStatus } from "../components/StatusCard.jsx";
+import { getHistory } from "../services/api.js";
 
 export function formatDate(timestamp) {
   return new Date(timestamp).toLocaleString(undefined, {
@@ -11,12 +13,29 @@ export function formatDate(timestamp) {
   });
 }
 
+function timeAgo(timestamp) {
+  const minutes = Math.floor((Date.now() - new Date(timestamp)) / 60000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 60 * 24) return `${Math.floor(minutes / 60)} h ago`;
+  const days = Math.floor(minutes / (60 * 24));
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
 export default function Dashboard({ user }) {
   const navigate = useNavigate();
-  const history = []; // loaded from /api/history in Phase 9
+  const [latest, setLatest] = useState(null);
+  const [totalAlerts, setTotalAlerts] = useState(null);
+  const [error, setError] = useState("");
 
-  const latest = history[0];
-  const totalAlerts = history.filter((record) => record.alert).length;
+  useEffect(() => {
+    getHistory(1)
+      .then((data) => {
+        setLatest(data.history[0] || null);
+        setTotalAlerts(data.totalAlerts);
+      })
+      .catch((err) => setError(err.message));
+  }, []);
 
   return (
     <div className="page">
@@ -26,6 +45,8 @@ export default function Dashboard({ user }) {
           <p className="muted">Here is your drowsiness monitoring overview.</p>
         </div>
       </header>
+
+      {error && <p className="banner banner-error" role="alert">{error}</p>}
 
       <div className="card-grid">
         <StatusCard
@@ -43,14 +64,14 @@ export default function Dashboard({ user }) {
         />
         <StatusCard
           label="Total Alerts"
-          value={totalAlerts}
+          value={totalAlerts ?? "—"}
           status={totalAlerts > 0 ? "drowsy" : undefined}
-          hint="Drowsy alerts recorded"
+          hint="Times the alarm was triggered"
         />
         <StatusCard
           label="Recent Detection"
-          value={latest ? formatDate(latest.timestamp) : "—"}
-          hint={latest ? `${latest.score}% · ${formatStatus(latest.status)}` : "Start a session to record one"}
+          value={latest ? timeAgo(latest.timestamp) : "—"}
+          hint={latest ? `${formatDate(latest.timestamp)} · ${latest.score}% ${formatStatus(latest.status)}` : "Start a session to record one"}
         />
       </div>
 

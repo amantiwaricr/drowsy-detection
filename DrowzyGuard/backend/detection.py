@@ -13,6 +13,7 @@ frames, so a normal blink barely moves it but eyes kept closed raise it.
 
 import base64
 import threading
+import time
 from collections import deque
 
 import cv2
@@ -23,11 +24,13 @@ import model
 
 WINDOW_SIZE = 15        # frames in the rolling window (~3-5 s at 3-5 frames/s)
 MAX_FRAME_WIDTH = 480   # larger frames are downscaled for speed
+SAVE_INTERVAL_SECONDS = 10  # history: save on every status change, else at most this often
 
 _face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
 _eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_eye.xml")
 
 _windows = {}              # user key -> deque of recent eye-closure values (0.0-1.0)
+_last_saved = {}           # user key -> (status, time) of the last history record
 _lock = threading.Lock()   # frames from the dev server's threads are analyzed one at a time
 
 
@@ -125,7 +128,28 @@ def analyze_frame(image, key="default"):
                 "face": True, "alert": alerts.is_alert(status)}
 
 
+def history_record(key, result):
+    """Return the record to store for this result, or None if it should not be saved.
+
+    A record is saved when the status changes, otherwise every SAVE_INTERVAL_SECONDS,
+    so history stays readable instead of holding several rows per second.
+    `alert` is True only on the record where the alarm starts, so counting alert
+    records counts alarm events.
+    """
+    if not result["face"]:
+        return None
+    status, now = result["status"], time.monotonic()
+    with _lock:
+        last = _last_saved.get(key)
+        changed = last is None or last[0] != status
+        if not changed and now - last[1] < SAVE_INTERVAL_SECONDS:
+            return None
+        _last_saved[key] = (status, now)
+    return {"score": result["score"], "status": status, "alert": result["alert"] and changed}
+
+
 def reset(key="default"):
-    """Clear a user's rolling window, e.g. when detection is restarted."""
+    """Clear a user's rolling window and save state, e.g. when detection is restarted."""
     with _lock:
         _windows.pop(key, None)
+        _last_saved.pop(key, None)

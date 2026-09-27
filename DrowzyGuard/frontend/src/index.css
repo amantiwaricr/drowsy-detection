@@ -722,3 +722,9 @@ h2 {
   color: #fcd34d;
   font-size: 0.9rem;
 }
+
+.alert-flag {
+  color: var(--drowsy);
+  font-weight: 600;
+  font-size: 0.9rem;
+}

@@ -68,7 +68,27 @@ def detect():
 
     if data.get("reset"):
         detection.reset(g.user_id)
-    return jsonify(detection.analyze_frame(image, g.user_id))
+    result = detection.analyze_frame(image, g.user_id)
+
+    record = detection.history_record(g.user_id, result)
+    if record:
+        try:
+            database.save_detection(g.user_id, **record)
+        except PyMongoError as exc:  # keep detecting even if saving fails
+            print(f"[database] Could not save detection: {exc}")
+    return jsonify(result)
+
+
+# ---------- History ----------
+
+@app.get("/api/history")
+@auth.require_auth
+def history():
+    limit = min(max(request.args.get("limit", 100, type=int), 1), 500)
+    return jsonify({
+        "history": database.get_history(g.user_id, limit),
+        "totalAlerts": database.count_alerts(g.user_id),
+    })
 
 
 # ---------- Error handlers ----------
