@@ -14,7 +14,8 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024  # webcam frames are ~20-80 KB
-CORS(app, origins=[os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")])
+# Comma-separated list, e.g. "http://localhost:5173,http://127.0.0.1:5173"
+CORS(app, origins=os.getenv("FRONTEND_ORIGIN", "http://localhost:5173").split(","))
 
 database.init_db()
 model.load_model()  # loaded once at startup, never per frame
