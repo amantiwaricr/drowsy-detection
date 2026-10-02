@@ -17,11 +17,11 @@ function cameraErrorMessage(err) {
 }
 
 /**
- * Where to draw the face box, in pixels inside the stage. `box` is in fractions
+ * Where to draw a box (face or eye), in pixels inside the stage. `box` is in fractions
  * of the camera frame; the video is shown with object-fit: cover, so the frame
  * may be cropped at the edges and the box must be scaled and offset the same way.
  */
-function faceBoxStyle(box, video, stage) {
+function boxStyle(box, video, stage) {
   if (!box || !video?.videoWidth || !stage) return null;
   const { clientWidth: cw, clientHeight: ch } = stage;
   const scale = Math.max(cw / video.videoWidth, ch / video.videoHeight);
@@ -41,9 +41,10 @@ function faceBoxStyle(box, video, stage) {
  * Shows the webcam while `active` is true and calls `onFrame(dataUrl)` in a
  * loop. The next frame is captured only after `onFrame` resolves, so slow
  * responses never pile up. `faceBox` (fractions of the frame) draws a green
- * box around the detected face.
+ * box around the detected face; `eyeBoxes` draws a small box per eye, green
+ * when open and red when closed.
  */
-export default function Camera({ active, onFrame, onError, interval = 250, faceBox = null }) {
+export default function Camera({ active, onFrame, onError, interval = 250, faceBox = null, eyeBoxes = [] }) {
   const videoRef = useRef(null);
   const stageRef = useRef(null);
   const canvasRef = useRef(null);
@@ -121,10 +122,17 @@ export default function Camera({ active, onFrame, onError, interval = 250, faceB
       <div className="camera-stage" ref={stageRef}>
         <video ref={videoRef} muted playsInline />
         {active && faceBox && (
-          <div className="face-box" style={faceBoxStyle(faceBox, videoRef.current, stageRef.current) || { display: "none" }}>
+          <div className="face-box" style={boxStyle(faceBox, videoRef.current, stageRef.current) || { display: "none" }}>
             <span className="face-box-label">Face</span>
           </div>
         )}
+        {active && faceBox && eyeBoxes?.map((eye, i) => (
+          <div
+            key={i}
+            className={`eye-box ${eye.closed ? "eye-box-closed" : ""}`}
+            style={boxStyle(eye, videoRef.current, stageRef.current) || { display: "none" }}
+          />
+        ))}
       </div>
       <canvas ref={canvasRef} hidden />
       {!active && !error && (

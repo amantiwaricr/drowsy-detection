@@ -93,17 +93,20 @@ def preprocess_eye(image, gray, box):
 
 
 def eye_closure(image, gray, gray_eq, face):
-    """How closed the eyes are in this frame, from 0.0 (open) to 1.0 (closed)."""
+    """How closed the eyes are in this frame, from 0.0 (open) to 1.0 (closed),
+    plus the eye boxes that were checked, each as (box, is_closed)."""
     eyes = detect_eyes(gray_eq, face)
     if model.is_loaded():
         boxes = eyes or estimate_eye_regions(face)
-        return float(np.mean([model.predict(preprocess_eye(image, gray, box)) for box in boxes]))
-    return 0.0 if eyes else 1.0
+        probs = [model.predict(preprocess_eye(image, gray, box)) for box in boxes]
+        return float(np.mean(probs)), [(box, p >= 0.5) for box, p in zip(boxes, probs)]
+    # Fallback: the detector only finds open eyes, so no boxes means closed.
+    return (0.0, [(box, False) for box in eyes]) if eyes else (1.0, [])
 
 
-def _face_box(face, image):
-    """Face position as fractions of the image (0-1), so the browser can draw it at any size."""
-    x, y, w, h = (int(v) for v in face)
+def _box(rect, image):
+    """A rectangle as fractions of the image (0-1), so the browser can draw it at any size."""
+    x, y, w, h = (int(v) for v in rect)
     height, width = image.shape[:2]
     return {"x": round(x / width, 4), "y": round(y / height, 4),
             "w": round(w / width, 4), "h": round(h / height, 4)}
@@ -127,14 +130,16 @@ def analyze_frame(image, key="default"):
         if face is None:
             # Keep an active alarm sounding: losing the face can mean the head dropped.
             return {"status": "no_face", "score": _score(window), "eyes": "unknown",
-                    "face": False, "box": None, "alert": alerts.is_alarm_active(key)}
+                    "face": False, "box": None, "eyeBoxes": [], "alert": alerts.is_alarm_active(key)}
 
-        closure = eye_closure(image, gray, gray_eq, face)
+        closure, eyes = eye_closure(image, gray, gray_eq, face)
         window.append(closure)
         score = _score(window)
         status = alerts.get_status(score)
         return {"status": status, "score": score, "eyes": "closed" if closure >= 0.5 else "open",
-                "face": True, "box": _face_box(face, image), "alert": alerts.update_alarm(key, score)}
+                "face": True, "box": _box(face, image),
+                "eyeBoxes": [{**_box(box, image), "closed": bool(closed)} for box, closed in eyes],
+                "alert": alerts.update_alarm(key, score)}
 
 
 def history_record(key, result):

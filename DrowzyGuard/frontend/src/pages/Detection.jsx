@@ -89,6 +89,7 @@ export default function Detection() {
             onError={stop}
             interval={FRAME_INTERVAL_MS}
             faceBox={live ? result.box : null}
+            eyeBoxes={live ? result.eyeBoxes : []}
           />
           <div className="controls">
             <button className="btn btn-primary" onClick={start} disabled={running}>

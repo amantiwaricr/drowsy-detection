@@ -1053,3 +1053,18 @@ h2 {
   text-transform: uppercase;
   white-space: nowrap;
 }
+
+.eye-box {
+  position: absolute;
+  border: 1.5px solid var(--awake);
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  transition: left 0.15s linear, top 0.15s linear, width 0.15s linear, height 0.15s linear,
+    border-color 0.15s;
+}
+
+.eye-box-closed {
+  border-color: var(--drowsy);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 0 8px rgba(239, 68, 68, 0.6);
+}
