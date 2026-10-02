@@ -101,6 +101,14 @@ def eye_closure(image, gray, gray_eq, face):
     return 0.0 if eyes else 1.0
 
 
+def _face_box(face, image):
+    """Face position as fractions of the image (0-1), so the browser can draw it at any size."""
+    x, y, w, h = (int(v) for v in face)
+    height, width = image.shape[:2]
+    return {"x": round(x / width, 4), "y": round(y / height, 4),
+            "w": round(w / width, 4), "h": round(h / height, 4)}
+
+
 def _score(window):
     # Divide by the full window size so the score ramps up at the start
     # instead of jumping to 100% on the first closed-eye frame.
@@ -119,14 +127,14 @@ def analyze_frame(image, key="default"):
         if face is None:
             # Keep an active alarm sounding: losing the face can mean the head dropped.
             return {"status": "no_face", "score": _score(window), "eyes": "unknown",
-                    "face": False, "alert": alerts.is_alarm_active(key)}
+                    "face": False, "box": None, "alert": alerts.is_alarm_active(key)}
 
         closure = eye_closure(image, gray, gray_eq, face)
         window.append(closure)
         score = _score(window)
         status = alerts.get_status(score)
         return {"status": status, "score": score, "eyes": "closed" if closure >= 0.5 else "open",
-                "face": True, "alert": alerts.update_alarm(key, score)}
+                "face": True, "box": _face_box(face, image), "alert": alerts.update_alarm(key, score)}
 
 
 def history_record(key, result):

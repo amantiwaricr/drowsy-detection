@@ -17,12 +17,35 @@ function cameraErrorMessage(err) {
 }
 
 /**
+ * Where to draw the face box, in pixels inside the stage. `box` is in fractions
+ * of the camera frame; the video is shown with object-fit: cover, so the frame
+ * may be cropped at the edges and the box must be scaled and offset the same way.
+ */
+function faceBoxStyle(box, video, stage) {
+  if (!box || !video?.videoWidth || !stage) return null;
+  const { clientWidth: cw, clientHeight: ch } = stage;
+  const scale = Math.max(cw / video.videoWidth, ch / video.videoHeight);
+  const shownWidth = video.videoWidth * scale;
+  const shownHeight = video.videoHeight * scale;
+  const offsetX = (cw - shownWidth) / 2;
+  const offsetY = (ch - shownHeight) / 2;
+  return {
+    left: offsetX + box.x * shownWidth,
+    top: offsetY + box.y * shownHeight,
+    width: box.w * shownWidth,
+    height: box.h * shownHeight,
+  };
+}
+
+/**
  * Shows the webcam while `active` is true and calls `onFrame(dataUrl)` in a
  * loop. The next frame is captured only after `onFrame` resolves, so slow
- * responses never pile up.
+ * responses never pile up. `faceBox` (fractions of the frame) draws a green
+ * box around the detected face.
  */
-export default function Camera({ active, onFrame, onError, interval = 250 }) {
+export default function Camera({ active, onFrame, onError, interval = 250, faceBox = null }) {
   const videoRef = useRef(null);
+  const stageRef = useRef(null);
   const canvasRef = useRef(null);
   const onFrameRef = useRef(onFrame);
   const onErrorRef = useRef(onError);
@@ -94,7 +117,15 @@ export default function Camera({ active, onFrame, onError, interval = 250 }) {
 
   return (
     <div className={`camera ${active && !error ? "camera-on" : ""}`}>
-      <video ref={videoRef} muted playsInline />
+      {/* Mirrored together so the face box lines up with the mirrored video. */}
+      <div className="camera-stage" ref={stageRef}>
+        <video ref={videoRef} muted playsInline />
+        {active && faceBox && (
+          <div className="face-box" style={faceBoxStyle(faceBox, videoRef.current, stageRef.current) || { display: "none" }}>
+            <span className="face-box-label">Face</span>
+          </div>
+        )}
+      </div>
       <canvas ref={canvasRef} hidden />
       {!active && !error && (
         <div className="camera-overlay">

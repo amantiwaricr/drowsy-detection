@@ -83,7 +83,13 @@ export default function Detection() {
 
       <div className="detection-grid">
         <section className={`card camera-card ${alarmOn ? "camera-card-alert" : ""}`}>
-          <Camera active={running} onFrame={handleFrame} onError={stop} interval={FRAME_INTERVAL_MS} />
+          <Camera
+            active={running}
+            onFrame={handleFrame}
+            onError={stop}
+            interval={FRAME_INTERVAL_MS}
+            faceBox={live ? result.box : null}
+          />
           <div className="controls">
             <button className="btn btn-primary" onClick={start} disabled={running}>
               Start

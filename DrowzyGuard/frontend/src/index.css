@@ -419,11 +419,16 @@ h2 {
   background: #05070b;
 }
 
+.camera-stage {
+  position: absolute;
+  inset: 0;
+  transform: scaleX(-1); /* mirror, like looking in a mirror */
+}
+
 .camera video {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scaleX(-1); /* mirror, like looking in a mirror */
   opacity: 0;
   transition: opacity 0.3s;
 }
@@ -1021,4 +1026,30 @@ h2 {
   .timeline-item { grid-template-columns: 24px 1fr; }
   .timeline-time { grid-column: 2; grid-row: 1; }
   .timeline-text { grid-column: 2; }
+}
+
+/* ---------- Face box on the live camera ---------- */
+.face-box {
+  position: absolute;
+  border: 2px solid var(--awake);
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 0 12px rgba(34, 197, 94, 0.45);
+  pointer-events: none;
+  transition: left 0.15s linear, top 0.15s linear, width 0.15s linear, height 0.15s linear;
+}
+
+.face-box-label {
+  position: absolute;
+  top: -1.45rem;
+  right: -2px; /* the stage is mirrored, so "right" shows on the left */
+  transform: scaleX(-1); /* un-mirror the text */
+  padding: 0.05rem 0.45rem;
+  border-radius: 4px;
+  background: var(--awake);
+  color: #04130a;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }

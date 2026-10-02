@@ -215,10 +215,11 @@ Routes marked 🔒 need the header `Authorization: Bearer <token>`.
 | `GET /api/health` | — | `{"status": "ok", "database": "connected", "model": "not found", "detection": "opencv fallback"}` |
 | `POST /api/register` | `{"email", "password"}` (6–128 chars) | `201 {"token", "user": {"id", "name", "email"}}` |
 | `POST /api/login` | `{"email", "password"}` | `{"token", "user": {...}}` |
-| `POST /api/detection` 🔒 | `{"image": "<base64 JPEG or data URL>", "reset": false}` | `{"status": "drowsy", "score": 82, "eyes": "closed", "face": true, "alert": true}` |
+| `POST /api/detection` 🔒 | `{"image": "<base64 JPEG or data URL>", "reset": false}` | `{"status": "drowsy", "score": 82, "eyes": "closed", "face": true, "box": {"x": 0.31, "y": 0.22, "w": 0.26, "h": 0.35}, "alert": true}` |
 | `GET /api/history` 🔒 | `?limit=100` (1–500) | `{"history": [{"id", "score", "status", "alert", "timestamp"}], "totalAlerts": 5}` |
 
-`status` is one of `awake`, `warning`, `drowsy`, `no_face`. Send `"reset": true`
+`status` is one of `awake`, `warning`, `drowsy`, `no_face`. `box` is the detected
+face as fractions of the frame (the green box on the live camera), or `null` when no face is found. Send `"reset": true`
 with the first frame of a session to start a fresh score.
 
 | Code | Meaning |
